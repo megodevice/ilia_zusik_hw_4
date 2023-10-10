@@ -42,7 +42,7 @@ public class Main {
         heroesAttack();
         // раунд окончен
         medicDoOwnWork(); // медик лечит
-        witcherDoOwnWork(); // колдун воскрешает
+        //witcherDoOwnWork(); // колдун воскрешает
         printStatistics();
     }
 
@@ -69,7 +69,7 @@ public class Main {
         if (gollumIndex != -1 && heroesHealth[gollumIndex] > 0) { // Если голлем найден и жив то атака босса снижена на 1/5
             bossDamageForRound -= bossDamage / 5;
         }
-        if (!bossIsKnockedNow) {
+        if (!bossIsKnockedNow) { // Если босс не оглушен
             for (int i = 0; i < heroesHealth.length; i++) { // Атакуем игроков по очереди
                 if (heroesHealth[i] > 0) { // Если игрок жив начинаем атаку
                     if (canLuck[i] && isLuckyNow) { // Если игрок может увернуться и это удалось то не присваивать урон и перейти к сделующему игроку
@@ -79,8 +79,13 @@ public class Main {
                     if (canReduceDamage[i]) { // Если атака идёт на голема то он принимает на себя полный удар
                         if (heroesHealth[i] - bossDamage <= 0) { // Если не может то погибает
                             heroesHealth[i] = 0;
-                            bossDamageForRound = bossDamage; // и босс наносит остальным игрокам полный удар
-                            continue;
+                            if (recoverAHero(i)) { // попытка воскрешения
+                                System.out.println("Hero " + heroesAttackType[i] + " was resurrected!!!");
+                                continue;
+                            } else {
+                                bossDamageForRound = bossDamage; // если не получилось воскресить то босс наносит остальным игрокам полный удар
+                                continue;
+                            }
                         } else {
                             heroesHealth[i] -= bossDamage; // либо принимает удар
                             continue;
@@ -88,13 +93,23 @@ public class Main {
                     } // Атака не на голема и не на лаки которому повезло
                     if (heroesHealth[i] - bossDamageForRound <= 0) { // Если босс убивает игрока завершаем атаку на текущего игрока
                         heroesHealth[i] = 0; // Если игрок погибает то голлем не принимает часть удара на себя
+                        if (recoverAHero(i)) { // попытка воскрешения
+                            System.out.println("Hero " + heroesAttackType[i] + " was resurrected!!!"); // если игрок воскрешен то переходим к следующему
+                            // continue;
+                        }
                     } else {
                         heroesHealth[i] -= bossDamageForRound; // иначе игрок получает удар
                         // Работа голлема
                         if (gollumIndex >= 0 && heroesHealth[gollumIndex] > 0) { // Если голлем жив, он найден
                             if (heroesHealth[gollumIndex] - (bossDamage / 5) <= 0) { // и если голлем не может больше брать на себя удар
                                 heroesHealth[gollumIndex] = 0; // тогда голлем погибает
-                                bossDamageForRound = bossDamage; // и босс наносит остальным игрокам полный удар
+                                if (recoverAHero(i)) { // попытка воскрешения
+                                    System.out.println("Hero " + heroesAttackType[i] + " was resurrected!!!");
+                                    // continue;
+                                } else {
+                                    bossDamageForRound = bossDamage; // если не получилось воскресить то босс наносит остальным игрокам полный удар
+                                    // continue;
+                                }
                             } else {
                                 heroesHealth[gollumIndex] -= bossDamage / 5; // иначе берет на себя 1/5 удара
                             }
@@ -103,7 +118,7 @@ public class Main {
                 }
             }
         } else {
-            bossIsKnockedNow = !bossIsKnockedNow;
+            bossIsKnockedNow = !bossIsKnockedNow; // Если босс был оглушен он встаёт
         }
 
 
@@ -135,7 +150,7 @@ public class Main {
                 break;
             }
         }
-        if (indexOfThor != -1 && heroesHealth[indexOfThor] > 0) { // если найден и жив
+        if (indexOfThor != -1 && heroesHealth[indexOfThor] > 0 && bossHealth > 0) { // если найден и жив, и босс еще жив
             bossIsKnockedNow = random.nextBoolean(); // узнаём был ли нанесён оглушительный удар
             if (bossIsKnockedNow) {
                 System.out.println("Boss was knocked!!!");
@@ -208,6 +223,7 @@ public class Main {
         }
     }
 
+    /*
     public static void witcherDoOwnWork() {
         Random random = new Random();
         int indexOfWitcher = -1;
@@ -234,5 +250,22 @@ public class Main {
                 System.out.println("The witcher resurrected the player " + heroesAttackType[whoGetRecover] + " by " + witcherRecoveryPoints + " points");
             }
         }
+    }
+    */
+
+    public static boolean recoverAHero(int indexOfHero) {
+        int indexOfWitcher = -1;
+        for (int i = 0; i < canRecover.length; i++) { // Поиск колдуна
+            if (canRecover[i]) {
+                indexOfWitcher = i;
+                break;
+            }
+        }
+        if (indexOfWitcher != -1 && heroesHealth[indexOfWitcher] > 0) {  // если колдун найден и жив то
+            heroesHealth[indexOfHero] = witcherRecoveryPoints; // воскрешаем выбранного игрока
+            heroesHealth[indexOfWitcher] = 0; // а сам колдун погибает
+            return true;
+        }
+        return false;
     }
 }
