@@ -261,6 +261,9 @@ public class Main {
                 break;
             }
         }
+        if (indexOfWitcher == indexOfHero) { // если мы пытаемся воскресить колдуном самого себя то завершаем
+            return false;
+        }
         if (indexOfWitcher != -1 && heroesHealth[indexOfWitcher] > 0) {  // если колдун найден и жив то
             heroesHealth[indexOfHero] = witcherRecoveryPoints; // воскрешаем выбранного игрока
             heroesHealth[indexOfWitcher] = 0; // а сам колдун погибает
